@@ -1,0 +1,42 @@
+{
+  "company": "TestCorp",
+  "research_data": {
+    "name": "TestCorp",
+    "industry": "Technology",
+    "size": "Unknown",
+    "location": "Various locations",
+    "description": "Target company: TestCorp",
+    "recent_news": [
+      "Research in progress"
+    ],
+    "tech_stack": [
+      "Python",
+      "APIs",
+      "Cloud platforms"
+    ],
+    "culture_keywords": [
+      "innovative",
+      "technical",
+      "growth-focused"
+    ],
+    "values": [
+      "Innovation",
+      "Quality",
+      "Collaboration"
+    ],
+    "competitors": [
+      "Industry competitors"
+    ],
+    "job_fit_score": 7.0,
+    "application_recommendations": [
+      "Emphasize infrastructure reliability (99.8% uptime) as foundation for AI system deployment",
+      "Highlight Python automation bot development as evidence of programming capabilities",
+      "Connect GitHub API integration experience to their technology stack",
+      "Position infrastructure background as valuable for understanding AI system requirements",
+      "Demonstrate learning mindset through documented transition to AI/automation"
+    ],
+    "research_timestamp": "2025-08-26T14:53:41.166653"
+  },
+  "generated_at": "2025-08-26T14:53:41.166653",
+  "version": "1.0"
+}

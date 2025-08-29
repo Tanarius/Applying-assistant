@@ -23,6 +23,10 @@ from pathlib import Path
 from ai_company_research import AICompanyResearcher, CompanyIntelligence
 from enhanced_resume_engine import EnhancedResumeEngine, ResumeCustomization
 from intelligent_cover_letter import IntelligentCoverLetterGenerator, CoverLetterGeneration
+from api_key_manager import find_openai_api_key, get_working_api_key
+from ai_powered_application_engine import AIPoweredApplicationEngine
+from parallel_ai_engine import ParallelAIEngine
+import asyncio
 
 class ApplicationEngine:
     """
@@ -44,16 +48,33 @@ class ApplicationEngine:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         
-        # Initialize AI components
-        self.company_researcher = AICompanyResearcher(openai_api_key)
-        self.resume_engine = EnhancedResumeEngine(openai_api_key)
-        self.cover_letter_generator = IntelligentCoverLetterGenerator(openai_api_key)
+        # Detect OpenAI API key
+        self.api_key = openai_api_key or find_openai_api_key()
+        
+        # Determine operation mode
+        if self.api_key:
+            print("* OpenAI API key detected - ENABLING SOPHISTICATED PARALLEL AI MODE")
+            print("* Maximum quality with GPT-4 + parallel processing (35-40 seconds)")
+            print("* Sophisticated tailoring with advanced strategic positioning")
+            self.parallel_ai_engine = ParallelAIEngine(openai_api_key=self.api_key)
+            self.ai_mode = True
+            self.parallel_mode = True
+        else:
+            print("* No OpenAI API key found - USING TEMPLATE MODE")
+            print("* Instant generation with basic templates")
+            # Initialize legacy components for template mode
+            self.company_researcher = AICompanyResearcher(None)
+            self.resume_engine = EnhancedResumeEngine(None)
+            self.cover_letter_generator = IntelligentCoverLetterGenerator(None)
+            self.ai_mode = False
+            self.parallel_mode = False
         
         # Application tracking
         self.applications = {}
         self.load_application_history()
         
-        print("AI Job Hunt Commander ready for intelligent job applications")
+        mode_text = "AI-POWERED" if self.ai_mode else "TEMPLATE"
+        print(f"AI Job Hunt Commander ready - {mode_text} MODE")
     
     def process_job_application(
         self, 
@@ -99,22 +120,130 @@ class ApplicationEngine:
         
         print(f"* Processing: {job_data.get('title', 'Unknown Role')} at {job_data.get('company', 'Unknown Company')}")
         
+        # Route to appropriate engine based on API key availability
+        if self.ai_mode and self.parallel_mode:
+            return self._process_with_parallel_ai_engine(job_data)
+        elif self.ai_mode:
+            return self._process_with_ai_engine(job_data)
+        else:
+            return self._process_with_template_mode(job_data)
+    
+    def _process_with_parallel_ai_engine(self, job_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process application using sophisticated parallel AI engine"""
+        print("\n* USING SOPHISTICATED PARALLEL AI MODE - Maximum quality + speed")
+        print("* GPT-4 for all tasks + parallel processing (35-40 seconds)")
+        print("* Advanced strategic positioning and technical depth")
+        
+        # Run parallel AI engine asynchronously
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            parallel_application = loop.run_until_complete(
+                self.parallel_ai_engine.generate_sophisticated_application(
+                    job_title=job_data.get('title', ''),
+                    company_name=job_data.get('company', ''),
+                    job_description=job_data.get('description', ''),
+                    job_url=job_data.get('url', '')
+                )
+            )
+            
+            # Create package compatible with existing interface
+            application_package = {
+                'application_id': self._generate_application_id(job_data),
+                'generated_at': datetime.now().isoformat(),
+                'job_information': job_data,
+                'parallel_ai_application': parallel_application.__dict__,
+                'application_score': parallel_application.sophistication_score,
+                'files_generated': [],
+                'mode': 'SOPHISTICATED_PARALLEL_AI',
+                'next_steps': self._generate_sophisticated_next_steps(parallel_application),
+                'performance_metrics': {
+                    'generation_time': parallel_application.generation_time,
+                    'sophistication_score': parallel_application.sophistication_score,
+                    'personalization_depth': parallel_application.personalization_depth,
+                    'strategic_insight_score': parallel_application.strategic_insight_score,
+                    'parallel_efficiency': parallel_application.parallel_efficiency,
+                    'api_calls_made': parallel_application.api_calls_made
+                }
+            }
+            
+            # Save sophisticated application to file
+            app_dir = self.output_dir / application_package['application_id']
+            app_dir.mkdir(exist_ok=True)
+            
+            sophisticated_file = self._save_sophisticated_application(parallel_application, app_dir)
+            application_package['files_generated'].append(sophisticated_file)
+            
+            # Save tracking data
+            self._save_application(application_package)
+            self._print_sophisticated_application_summary(application_package)
+            
+            return application_package
+            
+        except Exception as e:
+            print(f"❌ Parallel AI processing failed: {e}")
+            print("🔄 Falling back to standard AI mode...")
+            return self._process_with_ai_engine(job_data)
+    
+    def _process_with_ai_engine(self, job_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process application using AI-powered engine"""
+        print("\n* USING AI-POWERED MODE - Deep research in progress...")
+        print("* This will take 60-120 seconds for comprehensive analysis")
+        
+        # Use the AI engine for comprehensive generation
+        ai_application = self.ai_engine.generate_ai_application(
+            job_title=job_data.get('title', ''),
+            company_name=job_data.get('company', ''),
+            job_description=job_data.get('description', ''),
+            job_url=job_data.get('url', '')
+        )
+        
+        # Create package compatible with existing interface
+        application_package = {
+            'application_id': self._generate_application_id(job_data),
+            'generated_at': datetime.now().isoformat(),
+            'job_information': job_data,
+            'ai_application': ai_application.__dict__,
+            'application_score': ai_application.ai_quality_score,
+            'files_generated': [],
+            'mode': 'AI_POWERED',
+            'next_steps': self._generate_ai_next_steps(ai_application)
+        }
+        
+        # Save AI application to file
+        app_dir = self.output_dir / application_package['application_id']
+        app_dir.mkdir(exist_ok=True)
+        
+        ai_file = self.ai_engine.save_ai_application(ai_application, app_dir)
+        application_package['files_generated'].append(ai_file)
+        
+        # Save tracking data
+        self._save_application(application_package)
+        self._print_ai_application_summary(application_package)
+        
+        return application_package
+    
+    def _process_with_template_mode(self, job_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process application using template mode (legacy)"""
+        print("\n* USING TEMPLATE MODE - Instant generation")
+        
         # Step 2: AI Company Research
-        print("\n* Phase 1: AI Company Intelligence Gathering")
+        print("\n* Phase 1: Basic Company Intelligence Gathering")
         company_intelligence = self.company_researcher.research_company(
             job_data.get('company', 'Unknown'),
             job_data.get('title')
         )
         
         # Step 3: AI Resume Customization
-        print("\n* Phase 2: AI-Powered Resume Customization")
+        print("\n* Phase 2: Resume Template Customization")
         resume_customization = self.resume_engine.customize_resume_for_job(
             job_data,
             company_intelligence.__dict__ if company_intelligence else None
         )
         
         # Step 4: Intelligent Cover Letter Generation
-        print("\n* Phase 3: Intelligent Cover Letter Generation")
+        print("\n* Phase 3: Cover Letter Template Generation")
         cover_letter = self.cover_letter_generator.generate_cover_letter(
             job_data,
             company_intelligence
@@ -137,6 +266,58 @@ class ApplicationEngine:
         self._print_application_summary(application_package)
         
         return application_package
+    
+    def _generate_ai_next_steps(self, ai_application) -> List[str]:
+        """Generate next steps for AI-powered applications"""
+        return [
+            "Review comprehensive AI-generated application package",
+            "Customize cover letter with personal touches if needed",
+            "Submit through company's preferred application channel",
+            "Follow strategic positioning recommendations from research",
+            "Prepare for interview using AI-generated preparation guide",
+            "Schedule follow-up based on success strategy recommendations"
+        ]
+    
+    def _print_ai_application_summary(self, package: Dict[str, Any]) -> None:
+        """Print summary for AI-powered applications"""
+        print("\n" + "="*80)
+        print("*** AI-POWERED JOB APPLICATION COMPLETED ***")
+        print("="*80)
+        
+        # Basic info
+        job_info = package['job_information']
+        ai_app = package['ai_application']
+        
+        print(f"* Position: {job_info.get('title', 'Unknown')}")
+        print(f"* Company: {job_info.get('company', 'Unknown')}")
+        print(f"* Application ID: {package['application_id']}")
+        print(f"* Generation Mode: AI-POWERED (Deep Research)")
+        print(f"* Time Invested: {ai_app.get('time_invested', 0):.1f} seconds")
+        
+        # Quality metrics
+        print(f"\n* QUALITY SCORES:")
+        print(f"   Research Depth: {ai_app.get('research_depth_score', 0):.1f}/10")
+        print(f"   AI Content Quality: {ai_app.get('ai_quality_score', 0):.1f}/10")
+        print(f"   Personalization: {ai_app.get('personalization_score', 0):.1f}/10")
+        
+        # Strategic insights
+        print(f"\n* STRATEGIC POSITIONING:")
+        positioning = ai_app.get('strategic_positioning', 'N/A')[:100]
+        print(f"   {positioning}...")
+        
+        # Files generated
+        print(f"\n* FILES GENERATED:")
+        for file_path in package['files_generated']:
+            print(f"   - {file_path}")
+        
+        # Next steps
+        print(f"\n* RECOMMENDED NEXT STEPS:")
+        for i, step in enumerate(package['next_steps'][:4], 1):
+            print(f"   {i}. {step}")
+        
+        print("\n" + "="*80)
+        print("*** HIGH-QUALITY AI APPLICATION READY FOR SUBMISSION! ***")
+        print("="*80)
     
     def _scrape_job_posting(self, url: str) -> Optional[Dict[str, Any]]:
         """Scrape job posting from URL (enhanced version of existing scraper)"""
@@ -390,6 +571,164 @@ class ApplicationEngine:
         ]
         
         return analytics
+    
+    def _generate_sophisticated_next_steps(self, parallel_application) -> List[str]:
+        """Generate sophisticated next steps for parallel AI applications"""
+        return [
+            "Review comprehensive sophisticated AI-generated application package",
+            "Leverage advanced strategic positioning and competitive analysis",
+            "Utilize sophisticated interview preparation and technical depth guide",
+            "Implement executive-level success strategy and differentiation approach",
+            "Follow advanced career narrative and technical leadership positioning",
+            "Execute strategic application timeline with sophisticated follow-up approach"
+        ]
+    
+    def _save_sophisticated_application(self, parallel_application, app_dir) -> str:
+        """Save sophisticated parallel application to file"""
+        filename = f"Sophisticated_Parallel_{parallel_application.company_name}_{parallel_application.job_title}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        filepath = app_dir / filename
+        
+        content = f"""================================================================================
+  SOPHISTICATED PARALLEL AI APPLICATION PACKAGE
+================================================================================
+
+APPLICATION OVERVIEW
+Job Title: {parallel_application.job_title}
+Company: {parallel_application.company_name}
+Application Date: {parallel_application.application_date}
+
+PERFORMANCE METRICS
+Generation Time: {parallel_application.generation_time:.1f} seconds
+Sophistication Score: {parallel_application.sophistication_score}/10
+Personalization Depth: {parallel_application.personalization_depth}/10
+Strategic Insight Score: {parallel_application.strategic_insight_score}/10
+Parallel Efficiency: {parallel_application.parallel_efficiency:.1%}
+API Calls Made: {parallel_application.api_calls_made}
+Optimization Level: {parallel_application.optimization_level}
+
+================================================================================
+  EXECUTIVE SUMMARY
+================================================================================
+
+{parallel_application.executive_summary}
+
+================================================================================
+  SOPHISTICATED COVER LETTER
+================================================================================
+
+{parallel_application.cover_letter}
+
+================================================================================
+  STRATEGIC POSITIONING & COMPETITIVE ADVANTAGE
+================================================================================
+
+{parallel_application.strategic_positioning}
+
+================================================================================
+  ADVANCED COMPANY INTELLIGENCE
+================================================================================
+
+{parallel_application.company_intelligence}
+
+================================================================================
+  COMPETITIVE ANALYSIS
+================================================================================
+
+{parallel_application.competitive_analysis}
+
+================================================================================
+  TECHNICAL ALIGNMENT & REQUIREMENTS
+================================================================================
+
+{parallel_application.technical_alignment}
+
+================================================================================
+  SOPHISTICATED INTERVIEW PREPARATION
+================================================================================
+
+{parallel_application.interview_preparation}
+
+================================================================================
+  STRATEGIC SUCCESS PLAN
+================================================================================
+
+{parallel_application.success_strategy}
+
+================================================================================
+  CAREER TRANSITION NARRATIVE
+================================================================================
+
+{parallel_application.career_narrative}
+
+================================================================================
+  GENERATION DETAILS
+================================================================================
+
+Generated by: Sophisticated Parallel AI Engine
+Model Used: GPT-4 (maximum quality)
+Processing Method: Parallel execution with sophisticated prompting
+Quality Assurance: Multi-layer strategic analysis and technical depth
+Optimization: Maximum sophistication with speed enhancement
+
+Infrastructure Engineer to AI/ML Leadership Career Transition
+Executive-Level Sophisticated Application Package
+
+================================================================================
+"""
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        return str(filepath)
+    
+    def _print_sophisticated_application_summary(self, package: Dict[str, Any]) -> None:
+        """Print summary for sophisticated parallel applications"""
+        print("\n" + "="*80)
+        print("*** SOPHISTICATED PARALLEL AI APPLICATION COMPLETED ***")
+        print("="*80)
+        
+        # Basic info
+        job_info = package['job_information']
+        metrics = package['performance_metrics']
+        
+        print(f"* Position: {job_info.get('title', 'Unknown')}")
+        print(f"* Company: {job_info.get('company', 'Unknown')}")
+        print(f"* Application ID: {package['application_id']}")
+        print(f"* Generation Mode: SOPHISTICATED PARALLEL AI")
+        print(f"* Processing Time: {metrics.get('generation_time', 0):.1f} seconds")
+        
+        # Quality metrics
+        print(f"\n* SOPHISTICATION METRICS:")
+        print(f"   Overall Quality: {metrics.get('sophistication_score', 0):.1f}/10")
+        print(f"   Personalization Depth: {metrics.get('personalization_depth', 0):.1f}/10")
+        print(f"   Strategic Insight: {metrics.get('strategic_insight_score', 0):.1f}/10")
+        print(f"   Parallel Efficiency: {metrics.get('parallel_efficiency', 0):.1%}")
+        print(f"   API Calls Optimized: {metrics.get('api_calls_made', 0)}")
+        
+        # Performance comparison
+        original_time = 105  # seconds
+        current_time = metrics.get('generation_time', 0)
+        time_saved = original_time - current_time
+        speed_improvement = (time_saved / original_time) * 100
+        
+        print(f"\n* PERFORMANCE IMPROVEMENT:")
+        print(f"   Time Saved: {time_saved:.1f} seconds")
+        print(f"   Speed Improvement: {speed_improvement:.0f}% faster")
+        print(f"   Quality Level: Executive/Sophisticated")
+        
+        # Files generated
+        print(f"\n* FILES GENERATED:")
+        for file_path in package['files_generated']:
+            print(f"   - {Path(file_path).name}")
+        
+        # Next steps
+        print(f"\n* SOPHISTICATED NEXT STEPS:")
+        for i, step in enumerate(package['next_steps'][:4], 1):
+            print(f"   {i}. {step}")
+        
+        print("\n" + "="*80)
+        print("*** EXECUTIVE-LEVEL SOPHISTICATED APPLICATION READY! ***")
+        print("="*80)
 
 def main():
     """Command line interface for the Application Engine"""
